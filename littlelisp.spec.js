@@ -143,6 +143,20 @@ describe('littleLisp', function() {
         expect(t.interpret(t.parse("((lambda (x y) (list 0 x y)) 1 2)"))).toEqual([0, 1, 2]);
       });
 
+      it('returns rested lambda result', function() {
+        expect(t.interpret(t.parse([
+          '(                                  '
+        , '  (lambda (a)                      '
+        , '    (                              '
+        , '      (lambda (b) (list a a b b))  '
+        , '      "banana"                     '
+        , '    )                              '
+        , '  )                                '
+        , '  "apple"                          '
+        , ')                                  '
+        ].join('\n')))).toEqual(['apple', 'apple', 'banana', 'banana'])
+      })
+
       it('should return correct result when invoke lambda w params', function() {
         expect(t.interpret(t.parse("((lambda (l) (first l)) (list 1 2))")))
           .toEqual(1);
