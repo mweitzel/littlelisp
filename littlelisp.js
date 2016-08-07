@@ -57,8 +57,26 @@
       return interpret(input[1], context) ?
         interpret(input[2], context) :
         interpret(input[3], context);
+    },
+
+    "'": function(input, context) {
+      return { type: 'form', value: input[1] }
+    },
+
+    eval: function(input, context) {
+      input = interpret(input[1], context)
+      return interpret(
+        (input.type === 'form' || (!input.map))
+          ? unquote(input)
+          : input.map(unquote)
+      , context
+      )
     }
   };
+
+  function unquote (form) {
+    return form.type === 'form' ? form.value : form
+  }
 
   var interpretList = function(input, context) {
     if(input instanceof Array && input.length === 0) { return null }
@@ -69,7 +87,7 @@
       if (list[0] instanceof Function) {
         return list[0].apply(undefined, list.slice(1));
       } else {
-        return list;
+        throw new Error("'"+(list[0] || input[0].value)+"' is not a Function")
       }
     }
   };
@@ -77,18 +95,24 @@
   var interpret = function(input, context) {
     if (context === undefined) {
       return interpret(input, new Context(library));
+    } else if (context.constructor !== Context) {
+      return interpret(input, new Context(context, new Context(library)));
     } else if (input instanceof Array) {
       return interpretList(input, context);
-    } else if (input.type === "identifier") {
+    }
+    else if (input.type === "identifier") {
       return context.get(input.value);
-    } else if (input.type === "number" || input.type === "string") {
+    } else if( input.type ){
       return input.value;
+    } else {
+      return input
     }
   };
 
   var categorize = function(input) {
     if (!isNaN(parseFloat(input))) {
       return { type:'number', value: parseFloat(input) };
+
     } else if (input[0] === '"' && input.slice(-1) === '"') {
       return { type:'string', value: input.slice(1, -1) };
     } else {
@@ -119,7 +143,8 @@
                 .map(function(x, i) {
                    if (i % 2 === 0) { // not in string
                      return x.replace(/\(/g, ' ( ')
-                             .replace(/\)/g, ' ) ');
+                             .replace(/\)/g, ' ) ')
+                             .replace(/\'/g, " ' ");
                    } else { // in string
                      return x.replace(/ /g, "!whitespace!");
                    }

@@ -199,6 +199,9 @@ describe('littleLisp', function() {
       it('eval evaluates an unquoted simple object', function() {
         expect(t.interpret(t.parse("(eval(eval(eval 4)))"))).toEqual(4)
       })
+      it('can quote and eval back and forth until the cows come home', function() {
+        expect(t.interpret(t.parse("(eval (' (eval (' ( list 1 2)))))"))).toEqual([1,2])
+      })
     });
 
     describe('if', function() {
