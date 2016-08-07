@@ -128,8 +128,13 @@
   };
 
   var parse = function(input) {
-    return parenthesize(tokenize(input));
+    return parenthesize(tokenize(comment(input)));
   };
+
+  var comment = (input) =>
+                  input.split('\n')
+                    .map((str) => str.split(';')[0])
+                      .join('\n')
 
   exports.littleLisp = {
     parse: parse,
