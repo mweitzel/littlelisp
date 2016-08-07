@@ -124,7 +124,7 @@ describe('littleLisp', function() {
 
     describe('lambdas', function() {
       it('should return correct result when invoke lambda w no params', function() {
-        expect(t.interpret(t.parse("((lambda () list))"))).toEqual(t.library.list);
+        expect(t.interpret(t.parse("((lambda () \"asdf\"))"))).toEqual("asdf");
       });
 
       it('should return correct result when invoke lambda w no params', function() {
