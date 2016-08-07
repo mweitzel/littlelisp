@@ -179,6 +179,28 @@ describe('littleLisp', function() {
       });
     });
 
+    describe('quote and eval', function() {
+      it('quote does not evaluate, but holds form', function() {
+        expect(t.interpret(t.parse("('(garbage))")))
+          .toEqual({ type : 'form', value : [ { type : 'identifier', value : 'garbage' } ] })
+        expect(t.interpret(t.parse("('(list 1 3))")))
+          .toEqual({ type : 'form', value : [ { type : 'identifier', value : 'list' }, { type : 'number', value : 1 }, { type : 'number', value : 3 } ] })
+      })
+      var plus = function(a, b) { return a + b }
+      var plus_ctx = { "+": plus }
+      it('eval evaluates a quoted simple form', function() {
+        expect(t.interpret(t.parse("(eval ('(+ 1 3)))"), plus_ctx))
+          .toEqual(4)
+      })
+      it('eval evaluates a list of quoted forms', function() {
+        expect(t.interpret(t.parse("(eval (list ('+) ('1) ('3)))"), plus_ctx)).toEqual(4)
+        expect(t.interpret(t.parse("(eval (list (' +) 1 4))"), plus_ctx)).toEqual(5)
+      })
+      it('eval evaluates an unquoted simple object', function() {
+        expect(t.interpret(t.parse("(eval(eval(eval 4)))"))).toEqual(4)
+      })
+    });
+
     describe('if', function() {
       it('should choose the right branch', function() {
         expect(t.interpret(t.parse("(if 1 42 4711)"))).toEqual(42);
