@@ -61,6 +61,7 @@
   };
 
   var interpretList = function(input, context) {
+    if(input instanceof Array && input.length === 0) { return null }
     if (input.length > 0 && input[0].value in special) {
       return special[input[0].value](input, context);
     } else {
