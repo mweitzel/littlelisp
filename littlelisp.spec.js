@@ -63,19 +63,20 @@ describe('littleLisp', function() {
   describe('interpret', function() {
     describe('lists', function() {
       it('should return empty list', function() {
-        expect(t.interpret(t.parse('()'))).toEqual([]);
+        expect(t.interpret(t.parse('()'))).toEqual(null);
       });
 
       it('should return list of strings', function() {
-        expect(t.interpret(t.parse('("hi" "mary" "rose")'))).toEqual(['hi', "mary", "rose"]);
+        expect(function () { t.interpret(t.parse('("hi" "mary" "rose")')) }).toThrow()
+        expect(t.interpret(t.parse('(list "hi" "mary" "rose")'))).toEqual(['hi', "mary", "rose"]);
       });
 
       it('should return list of numbers', function() {
-        expect(t.interpret(t.parse('(1 2 3)'))).toEqual([1, 2, 3]);
+        expect(t.interpret(t.parse("(list 1 2 3)"))).toEqual([1, 2, 3]);
       });
 
       it('should return list of numbers in strings as strings', function() {
-        expect(t.interpret(t.parse('("1" "2" "3")'))).toEqual(["1", "2", "3"]);
+        expect(t.interpret(t.parse('(list "1" "2" "3")'))).toEqual(["1", "2", "3"]);
       });
     });
 
@@ -107,21 +108,27 @@ describe('littleLisp', function() {
 
     describe('invocation', function() {
       it('should run print on an int', function() {
+        var undo = hotSwap(console, 'log', function() {})
         expect(t.interpret(t.parse("(print 1)"))).toEqual(1);
+        undo()
       });
 
       it('should return first element of list', function() {
-        expect(t.interpret(t.parse("(first (1 2 3))"))).toEqual(1);
+        expect(t.interpret(t.parse("(first (list 1 2 3))"))).toEqual(1);
       });
 
       it('should return rest of list', function() {
-        expect(t.interpret(t.parse("(rest (1 2 3))"))).toEqual([2, 3]);
+        expect(t.interpret(t.parse("(rest (list 1 2 3))"))).toEqual([2, 3]);
       });
     });
 
     describe('lambdas', function() {
       it('should return correct result when invoke lambda w no params', function() {
-        expect(t.interpret(t.parse("((lambda () (rest (1 2))))"))).toEqual([2]);
+        expect(t.interpret(t.parse("((lambda () list))"))).toEqual(t.library.list);
+      });
+
+      it('should return correct result when invoke lambda w no params', function() {
+        expect(t.interpret(t.parse("((lambda () (rest (list 1 2))))"))).toEqual([2]);
       });
 
       it('should return correct result for lambda that takes and returns arg', function() {
@@ -129,28 +136,28 @@ describe('littleLisp', function() {
       });
 
       it('should return correct result for lambda that returns list of vars', function() {
-        expect(t.interpret(t.parse("((lambda (x y) (x y)) 1 2)"))).toEqual([1, 2]);
+        expect(t.interpret(t.parse("((lambda (x y) (list x y)) 1 2)"))).toEqual([1, 2]);
       });
 
       it('should get correct result for lambda that returns list of lits + vars', function() {
-        expect(t.interpret(t.parse("((lambda (x y) (0 x y)) 1 2)"))).toEqual([0, 1, 2]);
+        expect(t.interpret(t.parse("((lambda (x y) (list 0 x y)) 1 2)"))).toEqual([0, 1, 2]);
       });
 
       it('should return correct result when invoke lambda w params', function() {
-        expect(t.interpret(t.parse("((lambda (x) (first (x))) 1)")))
+        expect(t.interpret(t.parse("((lambda (l) (first l)) (list 1 2))")))
           .toEqual(1);
       });
     });
 
     describe('let', function() {
       it('should eval inner expression w names bound', function() {
-        expect(t.interpret(t.parse("(let ((x 1) (y 2)) (x y))"))).toEqual([1, 2]);
+        expect(t.interpret(t.parse("(let ((x 1) (y 2)) (list x y))"))).toEqual([1, 2]);
       });
 
       it('should not expose parallel bindings to each other', function() {
         // Expecting undefined for y to be consistent with normal
         // identifier resolution in littleLisp.
-        expect(t.interpret(t.parse("(let ((x 1) (y x)) (x y))"))).toEqual([1, undefined]);
+        expect(t.interpret(t.parse("(let ((x 1) (y x)) (list x y))"))).toEqual([1, undefined]);
       });
 
       it('should accept empty binding list', function() {
@@ -166,3 +173,9 @@ describe('littleLisp', function() {
     });
   });
 });
+
+function hotSwap(obj, id, tmp) {
+  var old = obj[id];
+  obj[id] = tmp;
+  return function() { obj[id] = old };
+}
