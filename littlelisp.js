@@ -1,5 +1,9 @@
 ;(function(exports) {
   var library = {
+    list: function() {
+      return Array.prototype.slice.call(arguments)
+    },
+
     first: function(x) {
       return x[0];
     },
